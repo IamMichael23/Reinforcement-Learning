@@ -20,9 +20,10 @@ class SkipFrame(Wrapper):
                 break
         return obs, total_reward, done, info
     
-    def apply_wrapper(self, env):
-        env = SkipFrame(env, skip=4)
-        env = GrayScaleObservation(env)
-        env = ResizeObservation(env, shape=84)
-        env = FrameStack(env, num_stack=4, lz4_compress=True)
-        return env
+
+def apply_wrapper(env):
+    env = SkipFrame(env, skip=4)
+    env = GrayScaleObservation(env)
+    env = ResizeObservation(env, shape=84)
+    env = FrameStack(env, num_stack=4, lz4_compress=True)
+    return env
