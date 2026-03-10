@@ -43,7 +43,7 @@ class MarioAgent:
         if np.random.rand() < self.exploration_rate:
             return np.random.randint(self.action_dim)
         # EXPLOIT
-        state = torch.tensor(state, dtype=torch.float32).\
+        state = torch.tensor(np.array(state), dtype=torch.float32).squeeze(-1).\
                              unsqueeze(0).to(self.online_net.device)
         q_values = self.online_net(state)   
         action = torch.argmax(q_values, dim=1).item()
@@ -57,10 +57,10 @@ class MarioAgent:
     def store_replay(self, state, action, reward, next_state, done):
         """Store experience to replay buffer"""
         self.replay_buffer.add(TensorDict({
-            "state": torch.tensor(state, dtype=torch.float32),
+            "state": torch.tensor(np.array(state), dtype=torch.float32).squeeze(-1),
             "action": torch.tensor(action),
             "reward": torch.tensor(reward, dtype=torch.float32),
-            "next_state": torch.tensor(next_state, dtype=torch.float32),
+            "next_state": torch.tensor(np.array(next_state), dtype=torch.float32).squeeze(-1),
             "done": torch.tensor(done)
         }, batch_size=[]))
 
@@ -93,7 +93,7 @@ class MarioAgent:
         # r + γ * max_a' Q_target(s', a') - target Q values from Bellman equation
         with torch.no_grad():
             max_next_q_values = self.target_net(next_states).max(dim=1)[0]  # max_a' Q_target(s', a')
-            target_q_values = rewards + (1 - dones) * self.reward_decay * max_next_q_values  # r + γ * max_a' Q_target(s', a')
+            target_q_values = rewards + (1 - dones.float()) * self.reward_decay * max_next_q_values  # r + γ * max_a' Q_target(s', a')
 
         # Minimize loss between Q(s,a) and r + γ * max_a' Q_target(s', a')
         loss = self.loss_fn(pred_q_values, target_q_values)
@@ -103,3 +103,22 @@ class MarioAgent:
 
         self.step_counter += 1
         self.decay_exploration()
+
+    def save(self, path="mario_model.pth"):
+        """Save model weights and training state to disk"""
+        torch.save({
+            "online_net": self.online_net.state_dict(),
+            "target_net": self.target_net.state_dict(),
+            "optimizer": self.optimizer.state_dict(),
+            "exploration_rate": self.exploration_rate,
+            "step_counter": self.step_counter
+        }, path)
+
+    def load(self, path="mario_model.pth"):
+        """Load model weights and training state from disk"""
+        checkpoint = torch.load(path, map_location=self.device)
+        self.online_net.load_state_dict(checkpoint["online_net"])
+        self.target_net.load_state_dict(checkpoint["target_net"])
+        self.optimizer.load_state_dict(checkpoint["optimizer"])
+        self.exploration_rate = checkpoint["exploration_rate"]
+        self.step_counter = checkpoint["step_counter"]

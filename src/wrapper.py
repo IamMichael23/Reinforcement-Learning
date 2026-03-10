@@ -18,7 +18,7 @@ class SkipFrame(Wrapper):
             total_reward += reward
             if done or truncated:
                 break
-        return obs, total_reward, done, info
+        return obs, total_reward, done, truncated, info
     
 
 def apply_wrapper(env):
