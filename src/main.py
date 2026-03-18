@@ -8,7 +8,7 @@ from mario import MarioAgent
 ENV_NAME = 'SuperMarioBros-v0'
 Number_OF_EPISODES = 50000
 
-env = gym_super_mario_bros.make(ENV_NAME, apply_api_compatibility=True, render_mode='human')
+env = gym_super_mario_bros.make(ENV_NAME, apply_api_compatibility=True, render_mode=None)
 env = JoypadSpace(env, RIGHT_ONLY)
 env = apply_wrapper(env)
 
@@ -18,6 +18,7 @@ action_dim = env.action_space.n
 agent = MarioAgent(state_dim=state_dim, action_dim=action_dim)
 if os.path.exists("mario_model.pth"):
     agent.load()
+    agent.exploration_rate = 0.7
     print("==================Loaded checkpoint==================")
 
 for episode in range(Number_OF_EPISODES):
@@ -40,14 +41,14 @@ for episode in range(Number_OF_EPISODES):
 
         if stuck_counter > 50:
             reward -= 1
-            print(f"Stuck at x={current_x} for {stuck_counter} steps, reward=-1")
+            #print(f"Stuck at x={current_x} for {stuck_counter} steps, reward=-1")
 
         agent.store_replay(state, action, reward, next_state=new_state, done=done)
         agent.learn()
         state = new_state
 
     # Save checkpoint every 100 episodes
-    if episode % 100 == 0:
+    if episode % 5 == 0:
         agent.save()
         print(f"Episode {episode} - Exploration Rate: {agent.exploration_rate:.4f} - Steps: {agent.step_counter}")
 
