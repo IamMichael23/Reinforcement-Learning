@@ -18,7 +18,7 @@ action_dim = env.action_space.n
 agent = MarioAgent(state_dim=state_dim, action_dim=action_dim)
 if os.path.exists("mario_model.pth"):
     agent.load()
-    agent.exploration_rate = 0.7
+    agent.exploration_rate = 0.6
     print("==================Loaded checkpoint==================")
 
 for episode in range(Number_OF_EPISODES):

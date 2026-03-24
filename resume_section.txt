@@ -1,5 +1,0 @@
-Super Mario Bros Reinforcement Learning Agent
-
-- Trained DQN agent to complete World 1-1 with 85% success rate across 100 evaluation episodes by engineering a 3-layer CNN feature extractor (32-64-64 filters) and 4-frame stacking pipeline, processing 50,000+ training episodes in OpenAI Gym
-- Accelerated training convergence by 3x compared to baseline DQN by engineering custom reward shaping with stuck-position penalties and frame-skipping wrappers, reducing total training time from 72 to 24 hours
-- Stabilized Q-value convergence across 460K+ optimization steps by implementing experience replay buffering with 100K memory capacity and target network synchronization every 10,000 steps, reducing reward variance by 40%
