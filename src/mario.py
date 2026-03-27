@@ -70,9 +70,7 @@ class MarioAgent:
             self.target_net.load_state_dict(self.online_net.state_dict())
 
     def learn(self):
-        """Update online network using Bellman equation:
-        Q(s, a) = r + γ * max_a' Q_target(s', a')
-        """
+        """Update online network using DDQN Bellman target."""
         if len(self.replay_buffer) < self.batch_size:
             return
 
@@ -90,12 +88,14 @@ class MarioAgent:
         pred_q_values = self.online_net(states)
         pred_q_values = pred_q_values[np.arange(self.batch_size), actions.squeeze()]
 
-        # r + γ * max_a' Q_target(s', a') - target Q values from Bellman equation
+        # DDQN target:
+        # choose next action from online network, evaluate it with target network
         with torch.no_grad():
-            max_next_q_values = self.target_net(next_states).max(dim=1)[0]  # max_a' Q_target(s', a')
-            target_q_values = rewards + (1 - dones.float()) * self.reward_decay * max_next_q_values  # r + γ * max_a' Q_target(s', a')
+            next_actions = self.online_net(next_states).argmax(dim=1, keepdim=True)
+            next_q_values = self.target_net(next_states).gather(1, next_actions).squeeze(1)
+            target_q_values = rewards + (1 - dones.float()) * self.reward_decay * next_q_values
 
-        # Minimize loss between Q(s,a) and r + γ * max_a' Q_target(s', a')
+        # Minimize loss between predicted Q(s,a) and DDQN target
         loss = self.loss_fn(pred_q_values, target_q_values)
         self.optimizer.zero_grad()
         loss.backward()
@@ -116,9 +116,15 @@ class MarioAgent:
 
     def load(self, path="mario_model.pth"):
         """Load model weights and training state from disk"""
-        checkpoint = torch.load(path, map_location=self.device)
+        try:
+            checkpoint = torch.load(path, map_location=self.device)
+        except (OSError, RuntimeError, KeyError, ValueError) as error:
+            print(f"Checkpoint load failed ({path}): {error}. Starting from scratch.")
+            return False
+
         self.online_net.load_state_dict(checkpoint["online_net"])
         self.target_net.load_state_dict(checkpoint["target_net"])
         self.optimizer.load_state_dict(checkpoint["optimizer"])
         self.exploration_rate = checkpoint["exploration_rate"]
         self.step_counter = checkpoint["step_counter"]
+        return True

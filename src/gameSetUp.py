@@ -10,7 +10,8 @@ done = True
 truncated = False
 for step in range(5000):
     if done or truncated:
-        state = env.reset()
+        state, _ = env.reset()
+        env.render()
     state, reward, done, truncated, info = env.step(env.action_space.sample())
     env.render()
 

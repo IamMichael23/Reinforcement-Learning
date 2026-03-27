@@ -7,8 +7,13 @@ from mario import MarioAgent
 
 ENV_NAME = 'SuperMarioBros-v0'
 Number_OF_EPISODES = 50000
+RENDER_MODE = None
 
-env = gym_super_mario_bros.make(ENV_NAME, apply_api_compatibility=True, render_mode=None)
+env = gym_super_mario_bros.make(
+    ENV_NAME,
+    apply_api_compatibility=True,
+    render_mode=RENDER_MODE,
+)
 env = JoypadSpace(env, RIGHT_ONLY)
 env = apply_wrapper(env)
 
@@ -18,11 +23,13 @@ action_dim = env.action_space.n
 agent = MarioAgent(state_dim=state_dim, action_dim=action_dim)
 if os.path.exists("mario_model.pth"):
     agent.load()
-    agent.exploration_rate = 0.6
-    print("==================Loaded checkpoint==================")
+    agent.exploration_rate = 0.25
+    print("==================now Loaded checkpoint==================")
 
 for episode in range(Number_OF_EPISODES):
     state, _ = env.reset()
+    if RENDER_MODE == "human":
+        env.render()
     done = False
     truncated = False
     last_x = 0
@@ -30,6 +37,8 @@ for episode in range(Number_OF_EPISODES):
     while not done and not truncated:
         action = agent.choose_action(state)
         new_state, reward, done, truncated, info = env.step(action)
+        if RENDER_MODE == "human":
+            env.render()
 
         # Penalize Mario for staying at the same x position
         current_x = info.get("x_pos", 0)
@@ -48,10 +57,9 @@ for episode in range(Number_OF_EPISODES):
         state = new_state
 
     # Save checkpoint every 100 episodes
-    if episode % 5 == 0:
+    if episode % 25 == 0:
         agent.save()
         print(f"Episode {episode} - Exploration Rate: {agent.exploration_rate:.4f} - Steps: {agent.step_counter}")
 
 agent.save()
 env.close()
-   
