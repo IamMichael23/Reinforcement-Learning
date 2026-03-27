@@ -18,6 +18,7 @@ class SkipFrame(Wrapper):
             total_reward += reward
             if done or truncated:
                 break
+        total_reward = np.clip(total_reward, -15, 15)
         return obs, total_reward, done, truncated, info
     
 
