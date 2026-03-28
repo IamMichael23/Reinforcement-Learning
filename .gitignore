@@ -1,6 +1,4 @@
 venv/
+.venv/
+*.pth
 __pycache__/
-*.pyc
-.DS_Store
-*.memmap
-.storage/
