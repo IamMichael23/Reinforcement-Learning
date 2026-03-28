@@ -1,10 +1,10 @@
 from nes_py.wrappers import JoypadSpace
 import gym_super_mario_bros
-from gym_super_mario_bros.actions import RIGHT_ONLY
+from gym_super_mario_bros.actions import COMPLEX_MOVEMENT
 
 
 env = gym_super_mario_bros.make('SuperMarioBros-v0', apply_api_compatibility=True, render_mode='human')
-env = JoypadSpace(env, RIGHT_ONLY)
+env = JoypadSpace(env, COMPLEX_MOVEMENT)
 
 done = True
 truncated = False

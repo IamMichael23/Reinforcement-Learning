@@ -13,7 +13,7 @@ class MarioAgent:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.999995
+        self.exploration_rate_decay = 0.9999995
         self.exploration_rate_min = 0.1
 
         
@@ -24,7 +24,7 @@ class MarioAgent:
         # Q-target network
         self.reward_decay = 0.9
         self.sync_every = 10000  # no. of experiences between Q_target & Q_online sync
-        self.batch_size = 32
+        self.batch_size = 64
         self.lr = 0.00025
         
         
@@ -91,9 +91,13 @@ class MarioAgent:
         pred_q_values = pred_q_values[np.arange(self.batch_size), actions.squeeze()]
 
         # r + γ * max_a' Q_target(s', a') - target Q values from Bellman equation
-        with torch.no_grad():
-            max_next_q_values = self.target_net(next_states).max(dim=1)[0]  # max_a' Q_target(s', a')
-            target_q_values = rewards + (1 - dones.float()) * self.reward_decay * max_next_q_values  # r + γ * max_a' Q_target(s', a')
+        with torch.no_grad(): 
+            best_next_actions = self.online_net(next_states).argmax(dim=1, keepdim=True) 
+            next_q_values = self.target_net(next_states).gather(dim=1, index=best_next_actions).squeeze(-1) 
+            target_q_values = rewards + (1 - dones.float()) * self.reward_decay * next_q_values 
+
+
+
 
         # Minimize loss between Q(s,a) and r + γ * max_a' Q_target(s', a')
         loss = self.loss_fn(pred_q_values, target_q_values)
@@ -122,3 +126,13 @@ class MarioAgent:
         self.optimizer.load_state_dict(checkpoint["optimizer"])
         self.exploration_rate = checkpoint["exploration_rate"]
         self.step_counter = checkpoint["step_counter"]
+
+    def load_conv_ony(self, path):
+        """Load only convolutional layer weights from a checkpoint"""
+        checkpoint = torch.load(path, map_location=self.device)
+        online_state_dict = self.online_net.state_dict()
+        conv_state_dict = {k: v for k, v in checkpoint["online_net"].items()
+                           if not k.startswith("fc.2")}
+        online_state_dict.update(conv_state_dict)
+        self.online_net.load_state_dict(online_state_dict)
+        self.target_net.load_state_dict(self.online_net.state_dict())
