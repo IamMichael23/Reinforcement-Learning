@@ -32,9 +32,9 @@ class RunningMeanStd:
 class PPOAgent:
     """Proximal Policy Optimization agent for Mario."""
     def __init__(self, state_dim, action_dim, n_envs=8, n_steps=256,
-                 lr=2.5e-4, gamma=0.99, gae_lambda=0.95,
-                 clip_epsilon=0.2, entropy_coeff=0.01, critic_coeff=0.5,
-                 n_epochs=4, batch_size=256):
+                 lr=2e-4, gamma=0.99, gae_lambda=0.95,
+                 clip_epsilon=0.15, entropy_coeff=0.005, critic_coeff=0.5,
+                 n_epochs=8, batch_size=1024):
 
         self.n_envs = n_envs
         self.n_steps = n_steps
@@ -45,7 +45,13 @@ class PPOAgent:
         self.clip_epsilon = clip_epsilon
         self.entropy_coeff = entropy_coeff
         self.critic_coeff = critic_coeff
-        self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
+        elif torch.backends.mps.is_available():
+            self.device = torch.device("mps")
+        else:
+            self.device = torch.device("cpu")
+        print(f"Using device: {self.device}")
 
         self.actor = ActorNet(state_dim, action_dim).to(self.device)
         self.critic = CriticNet(state_dim).to(self.device)
