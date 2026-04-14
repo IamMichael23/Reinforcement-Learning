@@ -13,7 +13,7 @@ class MarioAgent:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self.exploration_rate = 1
-        self.exploration_rate_decay = 0.999995
+        self.exploration_rate_decay = 0.9999995
         self.exploration_rate_min = 0.1
 
         
