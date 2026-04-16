@@ -7,6 +7,7 @@ from gym_super_mario_bros.actions import RIGHT_ONLY
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from wrapper import apply_wrapper
 from mario import PPOAgent
+import time
 
 
 class CompatEnv(gym.Wrapper):
@@ -17,20 +18,20 @@ class CompatEnv(gym.Wrapper):
         return self.env.reset(**kwargs)
 
 WORLD1_LEVELS = [
-    # "SuperMarioBros-v0"
-    "SuperMarioBros-1-1-v0",
-    "SuperMarioBros-1-2-v0",
-    "SuperMarioBros-1-3-v0",
-    "SuperMarioBros-1-4-v0",
+    "SuperMarioBros-v0"
+    # "SuperMarioBros-1-1-v0",
+    # "SuperMarioBros-1-2-v0",
+    # "SuperMarioBros-1-3-v0",
+    # "SuperMarioBros-1-4-v0",
 ]
-N_ENVS = 12         # 3 envs per level × 4 levels
+N_ENVS = 1        # 3 envs per level × 4 levels
 N_STEPS = 1024      # steps per env per rollout (total = 12×1024 = 12288 per update)
 TOTAL_UPDATES = 10000
 
 
 def make_env(level):
     def _init():
-        env = gym_super_mario_bros.make(level, apply_api_compatibility=True, render_mode=None)
+        env = gym_super_mario_bros.make(level, apply_api_compatibility=True, render_mode="human")
         env = JoypadSpace(env, RIGHT_ONLY)
         env = apply_wrapper(env)
         env = CompatEnv(env)
@@ -40,7 +41,10 @@ def make_env(level):
 
 if __name__ == "__main__":
     # 3 envs per level = 12 total
-    env_fns = [make_env(level) for level in WORLD1_LEVELS for _ in range(3)]
+    if N_ENVS > 1:
+        env_fns = [make_env(level) for level in WORLD1_LEVELS for _ in range(3)]
+    else:
+        env_fns = [make_env(level) for level in WORLD1_LEVELS]
     envs = SubprocVecEnv(env_fns)
 
     state_dim = (4, 84, 84)
@@ -71,6 +75,7 @@ if __name__ == "__main__":
             actions, log_probs = agent.choose_action(states)
 
             next_states, rewards, dones, infos = envs.step(actions)
+            time.sleep(0.02)
             next_states = np.array(next_states)
             rewards = np.array(rewards, dtype=np.float32)
             dones = np.array(dones, dtype=bool)
