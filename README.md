@@ -2,7 +2,7 @@
 
 A reinforcement learning agent that learns to play *Super Mario Bros* from raw 84×84 grayscale frames. Two algorithms in two branches: a DDQN baseline on `main`, and a PPO upgrade on `ppo`. Built with PyTorch, OpenAI Gym, and `gym-super-mario-bros`.
 
-> _Add a training GIF here once you have one — a 5-10 second clip of the agent clearing 1-1 is the single highest-leverage thing you can put on this README._
+<p align="center"><img src="mario_demo.gif" alt="PPO agent clearing Super Mario Bros World 1" width="320"></p>
 
 ## Branches
 
